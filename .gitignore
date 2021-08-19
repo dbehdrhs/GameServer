@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+#
+*.ipch
+*.pdb
+*.log
+*.tlog
+*.idb
+*.ilk
+*.db
+/.vs
+/Debug
+/x64
+/Server/.vs
