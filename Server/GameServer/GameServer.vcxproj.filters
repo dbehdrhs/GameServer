@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{81594d42-3c87-402d-ba90-242876cddb4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{852acdac-9554-4cbc-9e97-6ddcd274201b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Test">
+      <UniqueIdentifier>{b0f7a9db-80d2-45fe-9ebc-ed2b1875f74e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExternalLibrary">
+      <UniqueIdentifier>{a67f1709-9374-4f8a-924f-dc3997643bd2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExternalLibrary\JSON">
+      <UniqueIdentifier>{96aa8ebe-afed-49eb-8019-ee0d4cb7f536}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExternalLibrary\MySQL">
+      <UniqueIdentifier>{1055f889-157b-45ab-96a6-0da9d5911fd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Iocp">
+      <UniqueIdentifier>{d65daaba-bf94-4f2d-ba88-d7614f243fd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\SocketContext">
+      <UniqueIdentifier>{ac858e66-5b9d-4343-980b-059c98b3473a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\User">
+      <UniqueIdentifier>{c981ff17-80cf-4bc7-bc38-6aae41e5ea16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Server%28GameThread%29">
+      <UniqueIdentifier>{f3b7dced-8dd3-47cb-833e-4b8b19c82fe9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{774d4fd7-e0b2-48f4-a246-4a368ae19214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Packet">
+      <UniqueIdentifier>{13cc6a2e-7d6c-4a5f-9ad9-f2aa19eeb3d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Buffer">
+      <UniqueIdentifier>{5efb890e-5f20-42ea-8862-f770e0fcab25}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="test1.h">
+      <Filter>소스 파일\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="CIOCP.h">
+      <Filter>Network\Iocp</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketContext.h">
+      <Filter>Network\SocketContext</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet.h">
+      <Filter>Network\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketEnum.h">
+      <Filter>Network\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="CGameServer.h">
+      <Filter>Game\Server%28GameThread%29</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceManager.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CUser.h">
+      <Filter>Game\User</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="CBuffer.h">
+      <Filter>Network\Buffer</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="test1.cpp">
+      <Filter>소스 파일\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="CIOCP.cpp">
+      <Filter>Network\Iocp</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketContext.cpp">
+      <Filter>Network\SocketContext</Filter>
+    </ClCompile>
+    <ClCompile Include="CGameServer.cpp">
+      <Filter>Game\Server%28GameThread%29</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CUser.cpp">
+      <Filter>Game\User</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="CBuffer.cpp">
+      <Filter>Network\Buffer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Info.ini" />
+  </ItemGroup>
+</Project>
