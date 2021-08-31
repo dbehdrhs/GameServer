@@ -102,10 +102,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Server 8.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Server 8.0\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CBuffer.h" />
+    <ClInclude Include="CDB.h" />
     <ClInclude Include="CGameServer.h" />
     <ClInclude Include="CIOCP.h" />
     <ClInclude Include="Common.h" />
@@ -158,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CBuffer.cpp" />
+    <ClCompile Include="CDB.cpp" />
     <ClCompile Include="CGameServer.cpp" />
     <ClCompile Include="CIOCP.cpp" />
     <ClCompile Include="Common.cpp" />

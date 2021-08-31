@@ -4,31 +4,20 @@ class CIOCP;
 class CBuffer;
 struct StreamData;
 class CUser;
-
-class CRoom;
-
-// class CDB;
-
-/******************************
-// CGameServer
-iocp와 db 사이에서 단일 스레드로 동작
---------     --------------     ------
-| IOCP | <-> | GameServer | <-> | DB |
---------     --------------     ------
-Channel, Room, User 관리
-*******************************/
+class CDB;
 
 class CGameServer
 {
 private:
 	static CGameServer* m_pGameServer;
 	CIOCP* m_pIocp;
-	// CDB* m_db;
+	CDB* m_db;
 
-	CRoom* m_pRoom;
 	CUser* m_pUser;
 
-	CBuffer* m_pRecvBuffer;
+	CBuffer* m_pPacketBuffer; // iocp -> game
+	CBuffer* m_pDbSendBuffer; // game -> db
+	CBuffer* m_pDbResult; // db -> game
 
 public:
 	static CGameServer* GetInstance();
@@ -40,14 +29,27 @@ public:
 	BOOL Start(CIOCP* pIocp);
 	BOOL Stop();
 
-	CBuffer* GetRecvBuffer() { return m_pRecvBuffer; }
+	CBuffer* GetRecvBuffer() { return m_pPacketBuffer; }
 	BOOL WriteRecvData(StreamData streamData);
+	CBuffer* GetDbBuffer() { return m_pDbSendBuffer; }
+	CBuffer* GetDBResultBuffer() { return m_pDbResult; }
 
-	//
-	BOOL PacketProcess(WORD wID, char* pPacket);
-	BOOL PacketProcess(StreamData& streamData);
 public:
 	static void CALLBACK WorkerThread(LPVOID lpParam);
 	BOOL Worker();
+
+	//
+	BOOL UserConnect(WORD wID);
+	BOOL UserDisconnect(WORD wID);
+
+	//
+	BOOL CheckInvalidUser(WORD wID);
+	BOOL PacketProcess(StreamData& streamData);
+	BOOL PacketProcessLogin(char* pData);
+	BOOL PacketProcessTest(char* pData);
+
+	//
+	void SendToDB(StreamData& streamData);
+	BOOL DBResultProcess(StreamData& streamData);
 };
 

@@ -71,6 +71,7 @@ BOOL CIOCP::Start(WORD wPort, DWORD dwThreadCount)
 void CIOCP::Stop()
 {
 	m_state = stop;
+	closesocket(m_listenSocket);
 
 	PostQueuedCompletionStatus(m_hIocp, 0, ulIocpStopKey, NULL);
 
@@ -237,7 +238,7 @@ void CIOCP::Worker()
 			}
 
 			WORD wID = socketContext->GetID();
-			printf("[%d]Connect dwKey : %d, byte : %d\n", wID, dwKey, dwBytes);
+			printf("[%d] User Connect byte : %d\n", wID, dwBytes);
 
 			m_pSocketContext[wID].AcceptProcess();
 			continue;

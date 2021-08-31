@@ -20,7 +20,7 @@ BOOL CUser::PacketProcessLogin(CS_LOGIN * pPacket)
 		return FALSE;
 	}
 
-	m_userState = USER_STATE_CONNECT;
+	m_userState = USER_STATE_LOGIN_COMPLETE;
 	return TRUE;
 }
 
@@ -34,5 +34,10 @@ BOOL CUser::PacketProcessTest(CS_TEST * pPacket)
 {
 	printf("[%d] CUser::PacketProcessTest(), %d, %d, %d\n", m_wID, pPacket->nAccountID, pPacket->nCharacterID, pPacket->nItemID);
 
+	return TRUE;
+}
+
+BOOL CUser::DBProces(PVOID pData)
+{
 	return TRUE;
 }

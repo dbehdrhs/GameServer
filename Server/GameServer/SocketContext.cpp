@@ -99,6 +99,8 @@ BOOL SocketContext::AcceptProcess()
 		, (sockaddr**)&localAddr, &nLocalAddrLen
 		, (sockaddr**)&remoteAddr, &nRemoteAddrLen);
 
+	CGameServer::GetInstance()->UserConnect(m_wID);
+
 	RecvPost();
 	contextState = Connect;
 
@@ -127,6 +129,8 @@ BOOL SocketContext::DisconnectProcess()
 	}
 
 	contextState = TransmitFilePending;
+
+	CGameServer::GetInstance()->UserDisconnect(m_wID);
 
 	return TRUE;
 }

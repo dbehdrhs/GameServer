@@ -18,15 +18,6 @@
     <Filter Include="소스 파일\Test">
       <UniqueIdentifier>{b0f7a9db-80d2-45fe-9ebc-ed2b1875f74e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ExternalLibrary">
-      <UniqueIdentifier>{a67f1709-9374-4f8a-924f-dc3997643bd2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ExternalLibrary\JSON">
-      <UniqueIdentifier>{96aa8ebe-afed-49eb-8019-ee0d4cb7f536}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ExternalLibrary\MySQL">
-      <UniqueIdentifier>{1055f889-157b-45ab-96a6-0da9d5911fd9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network\Iocp">
       <UniqueIdentifier>{d65daaba-bf94-4f2d-ba88-d7614f243fd4}</UniqueIdentifier>
     </Filter>
@@ -47,6 +38,9 @@
     </Filter>
     <Filter Include="Network\Buffer">
       <UniqueIdentifier>{5efb890e-5f20-42ea-8862-f770e0fcab25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DB">
+      <UniqueIdentifier>{167b7fa6-5ebe-46f1-9049-8144103e349c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +80,9 @@
     <ClInclude Include="CBuffer.h">
       <Filter>Network\Buffer</Filter>
     </ClInclude>
+    <ClInclude Include="CDB.h">
+      <Filter>DB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -117,6 +114,9 @@
     </ClCompile>
     <ClCompile Include="CBuffer.cpp">
       <Filter>Network\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="CDB.cpp">
+      <Filter>DB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
