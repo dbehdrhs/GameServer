@@ -1,4 +1,6 @@
 # GameServer
+iocp(thread) <-queue-> game(thread) <-queue-> db(thread)
+***
 ### TODO
 ***
 DB : 
