@@ -1,9 +1,6 @@
 # GameServer
 iocp(thread) <-queue-> game(thread) <-queue-> db(thread)
 ***
-### TODO
-test : dobule buffering(game thread)
-***
 DB : 
 ```
 mysql lib 붙이기
