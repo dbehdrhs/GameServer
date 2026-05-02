@@ -4,49 +4,49 @@
 #pragma comment(lib, "libmysql.lib")
 
 #include "CDB.h"
+#include "CBuffer.h"
+#include "CGameServer.h"
+#include "Packet.h"
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//#include "D:\SVN\git\GameServer\Server\GameServer\mysql\include\cppconn\driver.h"
-//#include "D:\SVN\git\GameServer\Server\GameServer\mysql\include\cppconn\exception.h"
-//#include "D:\SVN\git\GameServer\Server\GameServer\mysql\include\cppconn\resultset.h"
-//#include "D:\SVN\git\GameServer\Server\GameServer\mysql\include\cppconn\statement.h"
-//#include "D:\SVN\git\GameServer\Server\GameServer\mysql\include\cppconn\prepared_statement.h"
-//
-//
-//#pragma comment(lib, "./mysql/lib64/vs14/mysqlcppconn.lib")
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//const string server = "tcp://localhost:3306";
-//const string username = "root";
-//const string password = "rlaclWla1!";
-//const string schema = "test";
-
+#define DB_INFO_PATH ".\\Info.ini"
 
 CDB::CDB()
-	: byThreadCount(1)
+	: byThreadCount(1), m_nPort(3306)
 {
+	ZeroMemory(m_szHost,     sizeof(m_szHost));
+	ZeroMemory(m_szUser,     sizeof(m_szUser));
+	ZeroMemory(m_szPassword, sizeof(m_szPassword));
+	ZeroMemory(m_szDB,       sizeof(m_szDB));
 }
-
 
 CDB::~CDB()
 {
+	mysql_close(&m_mysql);
 }
 
 BOOL CDB::Start()
 {
-	HANDLE hThread = INVALID_HANDLE_VALUE;
-	DWORD dwThreadID = 0;
+	// Info.ini에서 DB 접속 정보 로드
+	GetPrivateProfileStringA("DB", "Host",     "127.0.0.1", m_szHost,     sizeof(m_szHost),     DB_INFO_PATH);
+	GetPrivateProfileStringA("DB", "User",     "root",      m_szUser,     sizeof(m_szUser),     DB_INFO_PATH);
+	GetPrivateProfileStringA("DB", "Password", "",          m_szPassword, sizeof(m_szPassword), DB_INFO_PATH);
+	GetPrivateProfileStringA("DB", "Schema",   "accountdb", m_szDB,       sizeof(m_szDB),       DB_INFO_PATH);
+	m_nPort = GetPrivateProfileIntA("DB", "Port", 3306, DB_INFO_PATH);
 
-	if (byThreadCount < 1)
+	if (FALSE == ConnectDB())
 	{
 		return FALSE;
 	}
 
+	HANDLE hThread = INVALID_HANDLE_VALUE;
+	DWORD dwThreadID = 0;
+
 	for (int i = 0; i < byThreadCount; i++)
 	{
-		if (hThread = CreateThread(NULL, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(WorkerThread), reinterpret_cast<LPVOID>(this), 0, &dwThreadID))
+		hThread = CreateThread(NULL, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(WorkerThread), reinterpret_cast<LPVOID>(this), 0, &dwThreadID);
+		if (hThread)
 		{
-			printf("[%u] GameServer Thread Start\n", dwThreadID);
+			printf("[%u] DB Thread Start\n", dwThreadID);
 			CloseHandle(hThread);
 		}
 		else
@@ -55,13 +55,28 @@ BOOL CDB::Start()
 			return FALSE;
 		}
 	}
-	
 
 	return TRUE;
 }
 
 BOOL CDB::Stop()
 {
+	mysql_close(&m_mysql);
+	return TRUE;
+}
+
+BOOL CDB::ConnectDB()
+{
+	printf("MySQL Client Version: %s\n", mysql_get_client_info());
+
+	mysql_init(&m_mysql);
+	if (NULL == mysql_real_connect(&m_mysql, m_szHost, m_szUser, m_szPassword, m_szDB, m_nPort, NULL, 0))
+	{
+		printf("[DB] Connect Failed: %s\n", mysql_error(&m_mysql));
+		return FALSE;
+	}
+
+	printf("[DB] Connected to %s:%u/%s\n", m_szHost, m_nPort, m_szDB);
 	return TRUE;
 }
 
@@ -76,155 +91,99 @@ void CDB::WorkerThread(LPVOID lpParam)
 
 BOOL CDB::Worker()
 {
-	TestC();
+	CBuffer* pDbQueue = CGameServer::GetInstance()->GetDbBuffer();
+	HANDLE hEvent = pDbQueue->GetQueueEventHandle();
 
 	while (TRUE)
 	{
+		WaitForSingleObject(hEvent, INFINITE);
 
+		StreamData data;
+		while (pDbQueue->ReadData(data))
+		{
+			PACKET_HEADER header;
+			CopyMemory(&header, data.pData, sizeof(PACKET_HEADER));
+
+			switch (header.packetID)
+			{
+			case PACKET_LOGIN:
+			{
+				CS_LOGIN* pLogin = (CS_LOGIN*)data.pData;
+				QueryLogin(data.wUserID, pLogin->szID, pLogin->szPassword);
+			}
+			break;
+			default:
+				printf("[DB] Unknown packetID: %d\n", header.packetID);
+				break;
+			}
+		}
 	}
+
 	return TRUE;
 }
 
-void CDB::TestC()
+BOOL CDB::QueryLogin(WORD wID, const char* szID, const char* szPassword)
 {
-	printf("MysqlClientVision:%s\n", mysql_get_client_info());
-
-	MYSQL mysql;
-	mysql_init(&mysql);
-	if (false == mysql_real_connect(&mysql, "127.0.0.1", "root", "rlaclWla1!", "accountdb", 3306, NULL, 0))
+	// Prepared statement으로 SQL injection 방지
+	MYSQL_STMT* pStmt = mysql_stmt_init(&m_mysql);
+	if (pStmt == NULL)
 	{
-		printf("error:%s\n", mysql_error(&mysql));
+		printf("[DB] mysql_stmt_init failed\n");
+		return FALSE;
 	}
 
-	if (mysql_query(&mysql, "SELECT name, password, logintime, createtime FROM useraccount"))
+	const char* query = "SELECT id FROM UserAccount WHERE name = ? AND password = ?";
+	if (mysql_stmt_prepare(pStmt, query, (unsigned long)strlen(query)))
 	{
-		printf("%s\n", mysql_error(&mysql));
+		printf("[DB] mysql_stmt_prepare failed: %s\n", mysql_stmt_error(pStmt));
+		mysql_stmt_close(pStmt);
+		return FALSE;
 	}
 
-	MYSQL_RES* result = mysql_store_result(&mysql);
-	MYSQL_ROW row;
-	while (row = mysql_fetch_row(result))
+	MYSQL_BIND bind[2];
+	ZeroMemory(bind, sizeof(bind));
+
+	unsigned long idLen       = (unsigned long)strlen(szID);
+	unsigned long passwordLen = (unsigned long)strlen(szPassword);
+
+	bind[0].buffer_type   = MYSQL_TYPE_STRING;
+	bind[0].buffer        = (void*)szID;
+	bind[0].buffer_length = 32;
+	bind[0].length        = &idLen;
+
+	bind[1].buffer_type   = MYSQL_TYPE_STRING;
+	bind[1].buffer        = (void*)szPassword;
+	bind[1].buffer_length = 32;
+	bind[1].length        = &passwordLen;
+
+	if (mysql_stmt_bind_param(pStmt, bind))
 	{
-		printf("name:%s, password:%s, logintime:%s, createtime:%s\n", row[0], row[1], row[2], row[3]);
+		printf("[DB] mysql_stmt_bind_param failed: %s\n", mysql_stmt_error(pStmt));
+		mysql_stmt_close(pStmt);
+		return FALSE;
 	}
 
-	mysql_free_result(result);
+	if (mysql_stmt_execute(pStmt))
+	{
+		printf("[DB] mysql_stmt_execute failed: %s\n", mysql_stmt_error(pStmt));
+		mysql_stmt_close(pStmt);
+		return FALSE;
+	}
+
+	mysql_stmt_store_result(pStmt);
+	BOOL bSuccess = (mysql_stmt_num_rows(pStmt) > 0) ? TRUE : FALSE;
+	mysql_stmt_close(pStmt);
+
+	// 로그인 결과를 GameServer 큐에 전달
+	SC_LOGIN scLogin;
+	scLogin.bSuccess = bSuccess;
+
+	StreamData result;
+	result.wUserID = wID;
+	CopyMemory(result.pData, &scLogin, sizeof(SC_LOGIN));
+
+	CGameServer::GetInstance()->GetDBResultBuffer()->WriteData(result);
+
+	printf("[DB] QueryLogin [%d] ID:%s Result:%s\n", wID, szID, bSuccess ? "SUCCESS" : "FAIL");
+	return TRUE;
 }
-
-//void CDB::TestInsert()
-//{
-//	sql::Driver *driver = NULL;
-//	sql::Connection *con = NULL;
-//	sql::Statement *stmt = NULL;
-//	sql::PreparedStatement *pstmt = NULL;
-//
-//	try
-//	{
-//		driver = get_driver_instance();
-//		con = driver->connect(server, username, password);
-//	}
-//	catch (sql::SQLException e)
-//	{
-//		cout << "Could not connect to server. Error message: " << e.what() << endl;
-//		system("pause");
-//		exit(1);
-//	}
-//
-//	//please create database "quickstartdb" ahead of time
-//	con->setSchema("quickstartdb");
-//
-//	stmt = con->createStatement();
-//	stmt->execute("DROP TABLE IF EXISTS inventory");
-//	cout << "Finished dropping table (if existed)" << endl;
-//	stmt->execute("CREATE TABLE inventory (id serial PRIMARY KEY, name VARCHAR(50), quantity INTEGER);");
-//	cout << "Finished creating table" << endl;
-//	delete stmt;
-//
-//	pstmt = con->prepareStatement("INSERT INTO inventory(name, quantity) VALUES(?,?)");
-//	pstmt->setString(1, "banana");
-//	pstmt->setInt(2, 150);
-//	pstmt->execute();
-//	cout << "One row inserted." << endl;
-//
-//	pstmt->setString(1, "orange");
-//	pstmt->setInt(2, 154);
-//	pstmt->execute();
-//	cout << "One row inserted." << endl;
-//
-//	pstmt->setString(1, "apple");
-//	pstmt->setInt(2, 100);
-//	pstmt->execute();
-//	cout << "One row inserted." << endl;
-//
-//	delete pstmt;
-//	delete con;
-//	system("pause");
-//}
-//
-//void CDB::TestSelect()
-//{
-//	sql::Driver *driver;
-//	sql::Connection *con;
-//	sql::PreparedStatement *pstmt;
-//	sql::ResultSet *result;
-//
-//	try
-//	{
-//		driver = get_driver_instance();
-//		//for demonstration only. never save password in the code!
-//		con = driver->connect(server, username, password);
-//	}
-//	catch (sql::SQLException e)
-//	{
-//		cout << "Could not connect to server. Error message: " << e.what() << endl;
-//		system("pause");
-//		exit(1);
-//	}
-//
-//	con->setSchema("quickstartdb");
-//
-//	//select  
-//	pstmt = con->prepareStatement("SELECT * FROM inventory;");
-//	result = pstmt->executeQuery();
-//
-//	while (result->next())
-//		printf("Reading from table=(%d, %s, %d)\n", result->getInt(1), result->getString(2).c_str(), result->getInt(3));
-//
-//	delete result;
-//	delete pstmt;
-//	delete con;
-//	system("pause");
-//}
-//
-//void CDB::TestUpdate()
-//{
-//	sql::Driver *driver;
-//	sql::Connection *con;
-//	sql::PreparedStatement *pstmt;
-//
-//	try
-//	{
-//		driver = get_driver_instance();
-//		//for demonstration only. never save password in the code!
-//		con = driver->connect(server, username, password);
-//	}
-//	catch (sql::SQLException e)
-//	{
-//		cout << "Could not connect to server. Error message: " << e.what() << endl;
-//		system("pause");
-//		exit(1);
-//	}
-//
-//	con->setSchema("quickstartdb");
-//
-//	//update
-//	pstmt = con->prepareStatement("UPDATE inventory SET quantity = ? WHERE name = ?");
-//	pstmt->setInt(1, 200);
-//	pstmt->setString(2, "banana");
-//	pstmt->executeQuery();
-//	printf("Row updated\n");
-//
-//	delete con;
-//	delete pstmt;
-//	system("pause");
-//}

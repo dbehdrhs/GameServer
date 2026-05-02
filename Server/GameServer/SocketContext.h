@@ -40,7 +40,7 @@ public:
 private:
 	SOCKET m_socket;
 	SOCKADDR_IN m_sockAddrIn;
-	WORD m_wID; // 프로세스 안에서의 식별자
+	WORD m_wID; // ID 踰붿쐞: [0, g_dwMaxUserCount-1]
 	CONTEXT_STATE contextState;
 
 	OverlappedEx m_recvOverlapped;

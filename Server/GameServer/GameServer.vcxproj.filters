@@ -103,6 +103,12 @@
     <ClCompile Include="CGameServer.cpp">
       <Filter>Game\Server%28GameThread%29</Filter>
     </ClCompile>
+    <ClCompile Include="CGameServer_Packet.cpp">
+      <Filter>Game\Server%28GameThread%29</Filter>
+    </ClCompile>
+    <ClCompile Include="CGameServer_DB.cpp">
+      <Filter>Game\Server%28GameThread%29</Filter>
+    </ClCompile>
     <ClCompile Include="ServiceManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

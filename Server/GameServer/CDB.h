@@ -19,11 +19,17 @@ public:
 	static void CALLBACK WorkerThread(LPVOID lpParam);
 	BOOL Worker();
 
+private:
+	MYSQL m_mysql;
+	char m_szHost[64];
+	char m_szUser[64];
+	char m_szPassword[64];
+	char m_szDB[64];
+	unsigned int m_nPort;
+
+	BOOL ConnectDB();
+
 public:
-	void TestC();
-	//test connect/c++
-	/*void TestInsert();
-	void TestSelect();
-	void TestUpdate();*/
+	BOOL QueryLogin(WORD wID, const char* szID, const char* szPassword);
 };
 

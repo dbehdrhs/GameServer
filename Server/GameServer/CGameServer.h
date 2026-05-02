@@ -10,46 +10,46 @@ class CGameServer
 {
 private:
 	static CGameServer* m_pGameServer;
-	CIOCP* m_pIocp;
-	CDB* m_db;
+	CIOCP*   m_pIocp;
+	CDB*     m_db;
+	CUser*   m_pUser;
 
-	CUser* m_pUser;
+	CBuffer* m_pPacketBuffer; // IOCP  → Game
+	CBuffer* m_pDbSendBuffer; // Game  → DB
+	CBuffer* m_pDbResult;     // DB    → Game
 
-	CBuffer* m_pPacketBuffer; // iocp -> game
-	CBuffer* m_pDbSendBuffer; // game -> db
-	CBuffer* m_pDbResult; // db -> game
+	// 패킷 핸들러 테이블: 새 패킷은 RegisterHandlers()에만 추가
+	typedef BOOL (CGameServer::*PacketHandler)(WORD wID, char* pData);
+	PacketHandler m_handlers[PACKET_MAX];
+
+	void RegisterHandlers();
 
 public:
 	static CGameServer* GetInstance();
 
-public:
 	CGameServer();
 	~CGameServer();
 
 	BOOL Start(CIOCP* pIocp);
 	BOOL Stop();
 
-	CBuffer* GetRecvBuffer() { return m_pPacketBuffer; }
 	BOOL WriteRecvData(StreamData streamData);
-	CBuffer* GetDbBuffer() { return m_pDbSendBuffer; }
+	CBuffer* GetDbBuffer()       { return m_pDbSendBuffer; }
 	CBuffer* GetDBResultBuffer() { return m_pDbResult; }
 
-public:
 	static void CALLBACK WorkerThread(LPVOID lpParam);
 	BOOL Worker();
 
-	//
 	BOOL UserConnect(WORD wID);
 	BOOL UserDisconnect(WORD wID);
 
-	//
-	BOOL CheckInvalidUser(WORD wID);
+private:
+	BOOL IsUserLoggedIn(WORD wID);
 	BOOL PacketProcess(StreamData& streamData);
-	BOOL PacketProcessLogin(char* pData);
-	BOOL PacketProcessTest(char* pData);
+	BOOL PacketProcessLogin(WORD wID, char* pData);
+	BOOL PacketProcessLogout(WORD wID, char* pData);
+	BOOL PacketProcessTest(WORD wID, char* pData);
 
-	//
 	void SendToDB(StreamData& streamData);
 	BOOL DBResultProcess(StreamData& streamData);
 };
-

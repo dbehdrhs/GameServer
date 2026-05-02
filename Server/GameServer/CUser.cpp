@@ -14,13 +14,14 @@ CUser::~CUser()
 
 BOOL CUser::PacketProcessLogin(CS_LOGIN * pPacket)
 {
-	if (m_userState != USER_STATE_READY)
+	if (m_userState != USER_STATE_CONNECT)
 	{
-		printf("[%d] Invalid User State", m_wID);;
+		printf("[%d] Invalid User State : %d\n", m_wID, m_userState);
 		return FALSE;
 	}
 
 	m_userState = USER_STATE_LOGIN_COMPLETE;
+	printf("[%d] Login Complete : %s\n", m_wID, pPacket->szID);
 	return TRUE;
 }
 

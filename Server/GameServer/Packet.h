@@ -23,15 +23,23 @@ struct CS_LOGIN : public PACKET_HEADER
 	CS_LOGIN() : PACKET_HEADER(PACKET_LOGIN)
 	{
 		wPacketSize = sizeof(CS_LOGIN);
+		ZeroMemory(szID, sizeof(szID));
+		ZeroMemory(szPassword, sizeof(szPassword));
 	}
+
+	char szID[32];
+	char szPassword[32];
 };
 
 ////////////////////////////
 struct SC_LOGIN : public PACKET_HEADER
 {
-	SC_LOGIN() : PACKET_HEADER(PACKET_LOGIN)
+	SC_LOGIN() : PACKET_HEADER(PACKET_LOGIN), bSuccess(FALSE)
 	{
+		wPacketSize = sizeof(SC_LOGIN);
 	}
+
+	BOOL bSuccess;
 };
 
 ////////////////////////////

@@ -163,6 +163,8 @@
     <ClCompile Include="CBuffer.cpp" />
     <ClCompile Include="CDB.cpp" />
     <ClCompile Include="CGameServer.cpp" />
+    <ClCompile Include="CGameServer_Packet.cpp" />
+    <ClCompile Include="CGameServer_DB.cpp" />
     <ClCompile Include="CIOCP.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="main.cpp" />

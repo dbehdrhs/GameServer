@@ -28,19 +28,18 @@ BOOL SocketContext::Init(WORD wID)
 		return FALSE;
 	}
 
-	// send buffer¿¡ ³²¾Æ ÀÖ´õ¶óµµ µ¥ÀÌÅÍ »èÁ¦ ÈÄ Á¾·á ½ÃÅ²´Ù.
+	// RST ì—†ì´ ì¦‰ì‹œ ì—°ê²° ì¢…ë£Œ í›„ ì†Œì¼“ ìž¬ì‚¬ìš©ì„ ìœ„í•´ SO_LINGER ì„¤ì •
 	LINGER stLin;
-	stLin.l_onoff = 1;
+	stLin.l_onoff  = 1;
 	stLin.l_linger = 0;
 
-	if (SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char *)&stLin, sizeof(LINGER)))
+	if (SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&stLin, sizeof(LINGER)))
 	{
-		// fail setsockopt(SO_LINGER)
 		return FALSE;
 	}
 
 	contextState = AcceptReady;
-	
+
 	return TRUE;
 }
 
@@ -48,56 +47,55 @@ void SocketContext::PacketProcess(LPWSAOVERLAPPED pOV, DWORD dwBytes)
 {
 	if (pOV == &m_recvOverlapped)
 	{
-		printf("[%d] Recv Process : %dbytes\n", m_wID, dwBytes);
-
+		printf("[%d] Recv %d bytes\n", m_wID, dwBytes);
 		RecvProcess(dwBytes);
 		RecvPost();
 	}
 	else if (pOV == &m_sendOverlapped)
 	{
-		printf("[%d] Send Process : %dbytes\n", m_wID, dwBytes);
-		// SendPost();
+		printf("[%d] Send %d bytes\n", m_wID, dwBytes);
 	}
 	else
 	{
-		printf("[%d] Critial Error invalid overlapped, %p, %p, %p | %p\n", m_wID, this, &m_recvOverlapped, &m_sendOverlapped, pOV);
-		//
+		printf("[%d] Critical: unknown overlapped ptr recv=%p send=%p got=%p\n",
+			m_wID, &m_recvOverlapped, &m_sendOverlapped, pOV);
 	}
 }
 
 BOOL SocketContext::AcceptPost(SOCKET listenSocket)
 {
-	printf("[%d]AcceptPost\n", m_wID);
+	printf("[%d] AcceptPost\n", m_wID);
 
 	DWORD dwBytes = 0;
-	if (FALSE == AcceptEx(listenSocket, m_socket, m_recvOverlapped.buf, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &dwBytes, this))
+	if (FALSE == AcceptEx(listenSocket, m_socket, m_recvOverlapped.buf,
+		0,
+		sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
+		&dwBytes, this))
 	{
 		DWORD dwError = GetLastError();
 		if (dwError != WSA_IO_PENDING)
 		{
-			printf("Fail AcceptEx : %d\n", dwError);
-			// AcceptEx Fail
+			printf("[%d] AcceptEx failed: %d\n", m_wID, dwError);
 			return FALSE;
 		}
 	}
 
 	contextState = AcceptReady;
-
 	return TRUE;
 }
 
 BOOL SocketContext::AcceptProcess()
 {
-	// Á¢¼Ó Á¤º¸ ¾ò¾î¿À±â
-	sockaddr_in* localAddr = NULL;
+	sockaddr_in* localAddr  = NULL;
 	sockaddr_in* remoteAddr = NULL;
-	int nLocalAddrLen = 0;
+	int nLocalAddrLen  = 0;
 	int nRemoteAddrLen = 0;
 
-	GetAcceptExSockaddrs(this->m_recvOverlapped.buf, 0
-		, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16
-		, (sockaddr**)&localAddr, &nLocalAddrLen
-		, (sockaddr**)&remoteAddr, &nRemoteAddrLen);
+	GetAcceptExSockaddrs(m_recvOverlapped.buf,
+		0,
+		sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
+		(sockaddr**)&localAddr,  &nLocalAddrLen,
+		(sockaddr**)&remoteAddr, &nRemoteAddrLen);
 
 	CGameServer::GetInstance()->UserConnect(m_wID);
 
@@ -111,20 +109,19 @@ BOOL SocketContext::DisconnectProcess()
 {
 	ZeroMemory(reinterpret_cast<PVOID>(this), sizeof(WSAOVERLAPPED));
 	ZeroMemory(&m_sockAddrIn, sizeof(m_sockAddrIn));
-
-	ZeroMemory(m_recvOverlapped.buf, sizeof(m_recvOverlapped.buf));
+	ZeroMemory(m_recvOverlapped.buf,  sizeof(m_recvOverlapped.buf));
 	ZeroMemory(m_sendOverlapped.buf, sizeof(m_sendOverlapped.buf));
 
-	// ioType = IO_READY;
+	printf("[%d] DisconnectProcess\n", m_wID);
 
-	printf("[%d]TransmitFile\n", m_wID);
+	// TF_DISCONNECT | TF_REUSE_SOCKET: graceful disconnect í›„ ì†Œì¼“ ìž¬ì‚¬ìš© ì¤€ë¹„
+	// ì™„ë£Œë˜ë©´ IOCPì—ì„œ TransmitFilePending ìƒíƒœë¡œ ê°ì§€ â†’ AcceptPost ìž¬í˜¸ì¶œ
 	if (FALSE == TransmitFile(m_socket, NULL, 0, 0, this, NULL, TF_DISCONNECT | TF_REUSE_SOCKET))
 	{
 		DWORD dwError = GetLastError();
-		
 		if (dwError != WSA_IO_PENDING)
 		{
-			printf("TransmitFile Result : %d\n", dwError);
+			printf("[%d] TransmitFile failed: %d\n", m_wID, dwError);
 		}
 	}
 
@@ -138,18 +135,17 @@ BOOL SocketContext::DisconnectProcess()
 BOOL SocketContext::RecvPost()
 {
 	DWORD dwRecvBytes = 0;
-	DWORD dwFlag = 0;
-	// this->ioType = IO_RECV;
+	DWORD dwFlag      = 0;
 
-	int nResult = WSARecv(m_socket, &this->m_recvOverlapped.wsaBuf, 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED)&this->m_recvOverlapped, NULL);
+	int nResult = WSARecv(m_socket, &m_recvOverlapped.wsaBuf, 1,
+		&dwRecvBytes, &dwFlag,
+		(LPWSAOVERLAPPED)&m_recvOverlapped, NULL);
 
 	if (nResult == SOCKET_ERROR)
 	{
 		DWORD dwError = GetLastError();
-
 		if (dwError != WSA_IO_PENDING)
 		{
-			// printf("wID : %d, WSARecv : %d\n", m_wID, dwError);
 			return FALSE;
 		}
 	}
@@ -161,8 +157,7 @@ BOOL SocketContext::RecvProcess(DWORD dwRecvByte)
 {
 	if (TCP_SOCKET_BUFFER_SIZE < dwRecvByte)
 	{
-		// HACK : Èì....
-		printf("[%d] critical error data size is big:%d\n", m_wID, dwRecvByte);
+		printf("[%d] RecvProcess: oversized packet (%d)\n", m_wID, dwRecvByte);
 		return FALSE;
 	}
 
@@ -171,14 +166,14 @@ BOOL SocketContext::RecvProcess(DWORD dwRecvByte)
 	{
 		if (TCP_SOCKET_BUFFER_SIZE <= wReadSize)
 		{
-			printf("[%d] critical error data index:%d\n", m_wID, wReadSize);
+			printf("[%d] RecvProcess: buffer overrun at offset %d\n", m_wID, wReadSize);
 			return FALSE;
 		}
 
+		// íŒ¨í‚· ì²« 2ë°”ì´íŠ¸ = wPacketSize (í—¤ë” í¬í•¨ ì „ì²´ í¬ê¸°)
 		WORD wDataSize = 0;
-		CopyMemory((PVOID)&wDataSize, &m_recvOverlapped.buf[wReadSize], sizeof(wDataSize));
-		
-		//
+		CopyMemory(&wDataSize, &m_recvOverlapped.buf[wReadSize], sizeof(wDataSize));
+
 		StreamData streamData;
 		streamData.wUserID = m_wID;
 		CopyMemory(streamData.pData, &m_recvOverlapped.buf[wReadSize], wDataSize);
@@ -194,29 +189,27 @@ BOOL SocketContext::RecvProcess(DWORD dwRecvByte)
 BOOL SocketContext::SendPost()
 {
 	DWORD dwSendBytes = 0;
-	DWORD dwFlag = 0;
-	// this->ioType = IO_SEND;
-	
-	int nResult = WSASend(m_socket, &this->m_sendOverlapped.wsaBuf, 1, &dwSendBytes, dwFlag, (LPWSAOVERLAPPED)&this->m_sendOverlapped, NULL);
+	DWORD dwFlag      = 0;
+
+	int nResult = WSASend(m_socket, &m_sendOverlapped.wsaBuf, 1,
+		&dwSendBytes, dwFlag,
+		(LPWSAOVERLAPPED)&m_sendOverlapped, NULL);
 
 	if (nResult == SOCKET_ERROR)
 	{
 		DWORD dwError = GetLastError();
-
 		if (dwError != WSA_IO_PENDING)
 		{
-			printf("wID : %d, WSARecv : %d\n", m_wID, dwError);
+			printf("[%d] WSASend failed: %d\n", m_wID, dwError);
 		}
 	}
-	
+
 	return TRUE;
 }
 
 BOOL SocketContext::SendProcess(WORD wDataSize, PVOID pData)
 {
 	m_sendOverlapped.wsaBuf.len = wDataSize;
-	CopyMemory((PVOID)m_sendOverlapped.buf, (PVOID)&wDataSize, sizeof(wDataSize));
-	CopyMemory((PVOID)m_sendOverlapped.buf[2], pData, wDataSize);
-
+	CopyMemory(m_sendOverlapped.buf, pData, wDataSize);
 	return SendPost();
 }
